@@ -1,0 +1,1739 @@
+{
+  "name": "Agentic AI Social Media Video Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Create a Social Media Video",
+        "formDescription": "Enter a topic. The AI agents will plan, script, render and publish a short vertical video, then email you the result.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Video topic",
+              "fieldType": "textarea",
+              "fieldName": "prompt",
+              "placeholder": "e.g. 3 morning habits that boost productivity",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email for results",
+              "fieldType": "email",
+              "fieldName": "email",
+              "defaultValue": "varmacharan34@gmail.com",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Publish at (optional, ISO time e.g. 2026-10-01T18:00:00+05:30)",
+              "fieldName": "publishAt",
+              "placeholder": "Leave empty to publish right after rendering"
+            }
+          ]
+        },
+        "options": {
+          "path": "social-video-form",
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Got it! Your video is being generated. You will get an email in about 5-10 minutes."
+            }
+          }
+        }
+      },
+      "id": "9a39df79-e6fd-44b9-9d93-9c402ea5d998",
+      "name": "Video Request Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        464
+      ],
+      "webhookId": "afd380fe-ba71-49e2-b906-24d9c1b2a90a"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "prompt",
+              "value": "={{ ($json[\"body\"] || $json).prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "email",
+              "value": "={{ ($json[\"body\"] || $json).email }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "publishAt",
+              "value": "={{ ($json[\"body\"] || $json).publishAt || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "instagramAccountId",
+              "value": "charanvarma",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2435aed5-1d66-4e5c-a48d-6054d5415ea8",
+      "name": "Set Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Plan a short vertical social media video (45-60 seconds) about: {{ $json.prompt }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a social media video strategist. Produce a concise content plan: a catchy title, an attention-grabbing hook, the target audience, the tone, and 4-6 key points. Respond only in the required JSON format."
+        }
+      },
+      "id": "b918eae8-cf02-4bb9-8479-d209432d580f",
+      "name": "Planning Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "7bddf475-82f9-43d3-a896-c8d45dbb3e98",
+      "name": "Planning Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        496
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"title\": \"5 Habits of Successful People\", \"hook\": \"Most people never do #3...\", \"targetAudience\": \"young professionals\", \"tone\": \"energetic\", \"keyPoints\": [\"Wake up early\", \"Read daily\"] }"
+      },
+      "id": "92e466ca-c955-48de-a56f-27b342d38263",
+      "name": "Plan Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write the voiceover script for this plan.\nTitle: {{ $json.output.title }}\nHook: {{ $json.output.hook }}\nAudience: {{ $json.output.targetAudience }}\nTone: {{ $json.output.tone }}\nKey points: {{ $json.output.keyPoints.join(\"; \") }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a scriptwriter for short-form video. Write a spoken narration of 110-150 words: start with the hook, cover the key points, end with a call to action. Plain spoken text only, no stage directions or emojis."
+        }
+      },
+      "id": "592184f2-bb02-4067-abe3-a8b739764249",
+      "name": "Script Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        800,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "780a8daa-515c-4e19-ab8c-958ce8c5c05e",
+      "name": "Script Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        496
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"script\": \"Full narration text here...\" }"
+      },
+      "id": "7110565f-a982-42a9-b048-d0f4f2b9cc94",
+      "name": "Script Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        944,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Split this script into scenes and write an image prompt for each:\n\n{{ $json.output.script }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You split a narration script into 4-7 sequential scenes. Each scene keeps its exact portion of the narration (together the scenes must contain the full script, in order) and gets a detailed, cinematic vertical (9:16) image-generation prompt describing the visual. No text or words in the images."
+        }
+      },
+      "id": "f2b4fb41-bc65-40b8-960e-29985e1b6e1d",
+      "name": "Scene & Visual Prompt Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1152,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "763c3e55-2c86-46a3-9b0d-610a5ecc1f21",
+      "name": "Scene Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1168,
+        496
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"scenes\": [ { \"narration\": \"Scene narration text\", \"visualPrompt\": \"Cinematic photo of ...\" }, { \"narration\": \"Next part\", \"visualPrompt\": \"Close-up of ...\" } ] }"
+      },
+      "id": "710b0400-31ac-4957-b6cc-811065693e12",
+      "name": "Scene Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1296,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const scenes = $input.first().json.output.scenes || [];\nconst voice = \"Matthew\";\nconst audioClips = [];\nconst imageClips = [];\nconst captionClips = [];\nscenes.forEach((s, i) => {\n  const alias = \"scene\" + i;\n  audioClips.push({ alias: alias, asset: { type: \"text-to-speech\", text: s.narration, voice: voice }, start: i === 0 ? 0 : \"auto\", length: \"auto\" });\n  imageClips.push({ asset: { type: \"text-to-image\", prompt: s.visualPrompt, width: 720, height: 1280 }, start: \"alias://\" + alias, length: \"alias://\" + alias, effect: i % 2 === 0 ? \"zoomIn\" : \"zoomOut\" });\n  captionClips.push({ asset: { type: \"rich-caption\", src: \"alias://\" + alias }, start: \"alias://\" + alias, length: \"alias://\" + alias });\n});\nconst renderBody = {\n  timeline: { tracks: [ { clips: captionClips }, { clips: imageClips }, { clips: audioClips } ] },\n  output: { format: \"mp4\", size: { width: 720, height: 1280 } }\n};\nreturn [{ json: { renderBody: renderBody, sceneCount: scenes.length } }];"
+      },
+      "id": "e135000d-f804-4dbc-8881-44be6f323bc9",
+      "name": "Build Video Timeline",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.shotstack.io/edit/stage/render",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpTemplatedCustomAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.renderBody) }}",
+        "options": {}
+      },
+      "id": "e8aeb417-614c-43ed-b628-27f55025e2d0",
+      "name": "Render Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1776,
+        480
+      ],
+      "credentials": {
+        "httpTemplatedCustomAuth": {
+          "id": "ZYjYwkfSE98sC5Fd",
+          "name": "Shotstack API Key (Sandbox) (Charan V)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "id": "7e7f9d96-07e0-4ff4-9d07-ec3bb641eb24",
+      "name": "Wait for Render",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2000,
+        480
+      ],
+      "webhookId": "94fc51d7-ab94-4a4e-a2d1-f8536caf5e26"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.shotstack.io/edit/stage/render/{{ $(\"Render Video\").first().json.response.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpTemplatedCustomAuth",
+        "options": {}
+      },
+      "id": "ad80a071-4ca7-4bcc-adf5-288396f91128",
+      "name": "Check Render Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2224,
+        400
+      ],
+      "credentials": {
+        "httpTemplatedCustomAuth": {
+          "id": "ZYjYwkfSE98sC5Fd",
+          "name": "Shotstack API Key (Sandbox) (Charan V)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.response.status }}",
+                    "rightValue": "done",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "done"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.response.status }}",
+                    "rightValue": "failed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "failed"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "still rendering"
+        }
+      },
+      "id": "1926f1c6-d77d-4fdb-87ac-2582b5bf6931",
+      "name": "Render Finished?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2448,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Review this video before publishing.\nTopic: {{ $(\"Set Input\").first().json.prompt }}\nTitle: {{ $(\"Planning Agent\").first().json.output.title }}\nScript: {{ $(\"Script Agent\").first().json.output.script }}\nScenes: {{ $(\"Build Video Timeline\").first().json.sceneCount }}\nVideo URL: {{ $json.response.url }}\nDuration (s): {{ $json.response.duration }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a strict quality reviewer for social media videos. PASS only if a video URL exists, the script is on-topic, clear, free of harmful or misleading claims, and suitable for YouTube and Instagram. Otherwise FAIL and list the issues. Give a score from 1 to 10."
+        }
+      },
+      "id": "8c48e83a-0a00-4109-a302-5f01cc7a388b",
+      "name": "Quality Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2032,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "4a77cddf-1e51-4951-a69e-e47398daedcd",
+      "name": "Quality Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2048,
+        272
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"verdict\": \"PASS\", \"score\": 8, \"issues\": [\"none\"] }"
+      },
+      "id": "418dbf91-59d2-40b4-b5cb-0f9fe48fa833",
+      "name": "Quality Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2176,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "q1",
+              "leftValue": "={{ $json.output.verdict }}",
+              "rightValue": "PASS",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a61351d6-4334-4a5b-85df-aba065b99cc4",
+      "name": "Quality Passed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2384,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create publishing metadata for this video.\nTitle idea: {{ $(\"Planning Agent\").first().json.output.title }}\nAudience: {{ $(\"Planning Agent\").first().json.output.targetAudience }}\nScript: {{ $(\"Script Agent\").first().json.output.script }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a YouTube Shorts and Instagram Reels SEO expert. Produce: an SEO title (max 90 characters), a YouTube description (2-4 short paragraphs), 8-15 keyword tags, 5-10 hashtags, and an engaging Instagram caption that ends with the hashtags."
+        }
+      },
+      "id": "97ab11ad-e1f3-4b45-a982-21e1676023c1",
+      "name": "SEO Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2608,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "36f10934-f528-49f8-ad18-495c15c63a0c",
+      "name": "SEO Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2624,
+        224
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"youtubeTitle\": \"Title\", \"description\": \"Description text\", \"tags\": [\"tag one\", \"tag two\"], \"hashtags\": [\"#shorts\", \"#motivation\"], \"instagramCaption\": \"Caption text #shorts\" }"
+      },
+      "id": "169b1d25-483c-4e79-ae3f-e91c1909320f",
+      "name": "SEO Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2752,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "p1",
+              "name": "videoUrl",
+              "value": "={{ $(\"Check Render Status\").last().json.response.url }}",
+              "type": "string"
+            },
+            {
+              "id": "p2",
+              "name": "youtubeTitle",
+              "value": "={{ $json.output.youtubeTitle }}",
+              "type": "string"
+            },
+            {
+              "id": "p3",
+              "name": "description",
+              "value": "={{ $json.output.description }}\n\n{{ $json.output.hashtags.join(\" \") }}",
+              "type": "string"
+            },
+            {
+              "id": "p4",
+              "name": "tags",
+              "value": "={{ $json.output.tags.join(\",\") }}",
+              "type": "string"
+            },
+            {
+              "id": "p5",
+              "name": "instagramCaption",
+              "value": "={{ $json.output.instagramCaption }}",
+              "type": "string"
+            },
+            {
+              "id": "p6",
+              "name": "publishAt",
+              "value": "={{ $(\"Set Input\").first().json.publishAt || $now.plus(1, \"minute\").toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8b64b5c9-a34b-49ef-8b2e-608a80a902ee",
+      "name": "Prepare Publish Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2960,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{ $json.publishAt }}"
+      },
+      "id": "d26a9a3c-2aa6-4b91-b761-d1dc8f701f8f",
+      "name": "Wait Until Publish Time",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3232,
+        544
+      ],
+      "webhookId": "9c4b382e-2c14-45c3-a311-d57831edae09"
+    },
+    {
+      "parameters": {
+        "url": "={{ $(\"Prepare Publish Data\").item.json.videoUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "id": "37a960a3-3a7e-4071-a73f-967934d6b64f",
+      "name": "Download Final Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        4352,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Prepare Publish Data').item.json.youtubeTitle }}",
+        "categoryId": "22",
+        "options": {
+          "description": "={{ $('Prepare Publish Data').item.json.description }}",
+          "privacyStatus": "public",
+          "selfDeclaredMadeForKids": false,
+          "tags": "={{ $('Prepare Publish Data').item.json.tags }}"
+        }
+      },
+      "id": "027de474-b74f-499e-b9a3-2b04151b9abe",
+      "name": "YouTube Upload",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        4576,
+        320
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "j3Dx0Oz1oWlLW7fV",
+          "name": "YouTube account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "y1",
+              "name": "youtubeOk",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "y2",
+              "name": "youtubeUrl",
+              "value": "=https://www.youtube.com/watch?v={{ $json.uploadId || $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "54c71082-5003-45d9-9820-fbcd57a9b951",
+      "name": "YouTube Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4800,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "k1",
+              "name": "instagramOk",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "k2",
+              "name": "instagramUrl",
+              "value": "Not posted - Instagram is turned off for now",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d28425e0-a7fd-430f-b985-79b04e67a27d",
+      "name": "Instagram Skipped",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4576,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "y3",
+              "name": "youtubeOk",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "y4",
+              "name": "youtubeUrl",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "y5",
+              "name": "youtubeError",
+              "value": "={{ JSON.stringify($json).slice(0, 500) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "304ceb74-1a5c-4edc-b7f0-a3ee823daf15",
+      "name": "YouTube Failed",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4800,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Set Input\").first().json.email }}",
+        "subject": "=Video automation stopped: {{ $(\"Set Input\").first().json.prompt }}",
+        "message": "=<p>Your video could not be published.</p><p><b>Reason:</b> {{ $json.output ? \"Quality check failed (score \" + $json.output.score + \"): \" + ($json.output.issues || []).join(\"; \") : \"Video render failed: \" + ($json.response?.error || \"unknown error\") }}</p><p>Send the request again to regenerate.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "aba6e593-3a50-494e-9c6d-a569b8aa966c",
+      "name": "Send Failure Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2672,
+        432
+      ],
+      "webhookId": "d7203906-da21-4009-b89e-b9c7379d6a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YBzuesqqU3Z00Hw0",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "social-video",
+        "options": {}
+      },
+      "id": "862b52ee-03ac-4f23-a8ac-f9101f081d21",
+      "name": "Video Request Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        272
+      ],
+      "webhookId": "c738412a-4fc4-44d5-b456-7227df561a48"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "dd8e92da-6944-44bd-b0a5-aabf7c27fc84",
+      "name": "Combine Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        5024,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v23.0",
+        "node": "={{ $(\"Set Input\").first().json.instagramAccountId }}",
+        "edge": "media",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "media_type",
+                "value": "REELS"
+              },
+              {
+                "name": "video_url",
+                "value": "={{ $(\"Prepare Publish Data\").item.json.videoUrl }}"
+              },
+              {
+                "name": "caption",
+                "value": "={{ $(\"Prepare Publish Data\").item.json.instagramCaption }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "5aa39994-4290-4986-9ab6-d29f63657303",
+      "name": "Create Instagram Reel Container",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        3456,
+        736
+      ],
+      "disabled": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "id": "907920cd-bb4a-48b4-9999-409d1f58e2f6",
+      "name": "Wait for Instagram Processing",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3680,
+        656
+      ],
+      "webhookId": "5c90157c-103f-4338-b03a-1069cbac1e56"
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v23.0",
+        "node": "={{ $(\"Create Instagram Reel Container\").first().json.id }}",
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "status_code"
+              }
+            ]
+          }
+        }
+      },
+      "id": "6101c21f-e4d6-4583-80b1-1d9a4b19c656",
+      "name": "Check Instagram Status",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        3904,
+        592
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "i1",
+              "leftValue": "={{ $json.status_code }}",
+              "rightValue": "FINISHED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8969ac86-eb05-44d9-88d4-7c827e5d9423",
+      "name": "Ready to Publish?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4128,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v23.0",
+        "node": "={{ $(\"Set Input\").first().json.instagramAccountId }}",
+        "edge": "media_publish",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "creation_id",
+                "value": "={{ $(\"Create Instagram Reel Container\").first().json.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "ebe22927-103d-4245-a396-aba2e96ab8bc",
+      "name": "Publish Instagram Reel",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        4352,
+        656
+      ],
+      "disabled": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v23.0",
+        "node": "={{ $json.id }}",
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "permalink"
+              }
+            ]
+          }
+        }
+      },
+      "id": "59571350-3501-418f-aaaf-a7ad38c9ca7c",
+      "name": "Get Instagram Post URL",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        4576,
+        608
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "g1",
+              "name": "instagramOk",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "g2",
+              "name": "instagramUrl",
+              "value": "={{ $json.permalink }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f544f8f5-725e-4266-b981-6659cc4d4d09",
+      "name": "Instagram Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4800,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "g3",
+              "name": "instagramOk",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "g4",
+              "name": "instagramUrl",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "g5",
+              "name": "instagramError",
+              "value": "={{ JSON.stringify($json).slice(0, 500) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7e66cc1c-9afa-45e2-86ab-3292e30e1579",
+      "name": "Instagram Failed",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4576,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b1",
+              "leftValue": "={{ $json.youtubeOk }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "b2",
+              "leftValue": "={{ $json.instagramOk }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9aeede52-03c0-43cb-a8ee-50f022bc527c",
+      "name": "Both Successful?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5248,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Set Input\").first().json.email }}",
+        "subject": "=Your video is live: {{ $(\"Prepare Publish Data\").first().json.youtubeTitle }}",
+        "message": "=<p>Your AI-generated video has been published.</p><ul><li><b>Final video:</b> <a href=\"{{ $(\"Prepare Publish Data\").first().json.videoUrl }}\">final_video.mp4</a></li><li><b>YouTube:</b> <a href=\"{{ $json.youtubeUrl }}\">{{ $json.youtubeUrl }}</a></li><li><b>Instagram Reel:</b> <a href=\"{{ $json.instagramUrl }}\">{{ $json.instagramUrl }}</a></li></ul>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "6db627e1-7207-4c10-a385-50ae6d2493a4",
+      "name": "Send Success Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        5472,
+        416
+      ],
+      "webhookId": "1f0c0d81-b328-40b4-975e-ab0defeab46d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YBzuesqqU3Z00Hw0",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Set Input\").first().json.email }}",
+        "subject": "=Video publishing had problems: {{ $(\"Prepare Publish Data\").first().json.youtubeTitle }}",
+        "message": "=<p>Your video was generated, but publishing did not fully succeed.</p><ul><li><b>Final video:</b> <a href=\"{{ $(\"Prepare Publish Data\").first().json.videoUrl }}\">final_video.mp4</a></li><li><b>YouTube:</b> {{ $json.youtubeOk ? $json.youtubeUrl : \"Failed - \" + $json.youtubeError }}</li><li><b>Instagram:</b> {{ $json.instagramOk ? $json.instagramUrl : \"Failed - \" + $json.instagramError }}</li></ul>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "378c219b-4c4a-417e-9a6d-6069431b34b5",
+      "name": "Send Error Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        5472,
+        608
+      ],
+      "webhookId": "2909c0b7-9be9-4a24-ad1a-a3f8af60f417",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YBzuesqqU3Z00Hw0",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Video Request Form": {
+      "main": [
+        [
+          {
+            "node": "Set Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Input": {
+      "main": [
+        [
+          {
+            "node": "Planning Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planning Agent": {
+      "main": [
+        [
+          {
+            "node": "Script Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planning Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Planning Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Planning Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Script Agent": {
+      "main": [
+        [
+          {
+            "node": "Scene & Visual Prompt Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Script Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Script Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Script Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Script Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scene & Visual Prompt Agent": {
+      "main": [
+        [
+          {
+            "node": "Build Video Timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scene Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Scene & Visual Prompt Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scene Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Scene & Visual Prompt Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Video Timeline": {
+      "main": [
+        [
+          {
+            "node": "Render Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Video": {
+      "main": [
+        [
+          {
+            "node": "Wait for Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Render": {
+      "main": [
+        [
+          {
+            "node": "Check Render Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Render Status": {
+      "main": [
+        [
+          {
+            "node": "Render Finished?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Finished?": {
+      "main": [
+        [
+          {
+            "node": "Quality Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Failure Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quality Agent": {
+      "main": [
+        [
+          {
+            "node": "Quality Passed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quality Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Quality Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quality Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Quality Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quality Passed?": {
+      "main": [
+        [
+          {
+            "node": "SEO Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Failure Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Agent": {
+      "main": [
+        [
+          {
+            "node": "Prepare Publish Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SEO Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "SEO Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Publish Data": {
+      "main": [
+        [
+          {
+            "node": "Wait Until Publish Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Until Publish Time": {
+      "main": [
+        [
+          {
+            "node": "Download Final Video",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Instagram Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Final Video": {
+      "main": [
+        [
+          {
+            "node": "YouTube Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Upload": {
+      "main": [
+        [
+          {
+            "node": "YouTube Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "YouTube Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Success": {
+      "main": [
+        [
+          {
+            "node": "Combine Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Skipped": {
+      "main": [
+        [
+          {
+            "node": "Combine Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "YouTube Failed": {
+      "main": [
+        [
+          {
+            "node": "Combine Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video Request Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Results": {
+      "main": [
+        [
+          {
+            "node": "Both Successful?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Instagram Reel Container": {
+      "main": [
+        [
+          {
+            "node": "Wait for Instagram Processing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Instagram Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Instagram Processing": {
+      "main": [
+        [
+          {
+            "node": "Check Instagram Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Instagram Status": {
+      "main": [
+        [
+          {
+            "node": "Ready to Publish?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ready to Publish?": {
+      "main": [
+        [
+          {
+            "node": "Publish Instagram Reel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for Instagram Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish Instagram Reel": {
+      "main": [
+        [
+          {
+            "node": "Get Instagram Post URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Instagram Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Instagram Post URL": {
+      "main": [
+        [
+          {
+            "node": "Instagram Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Success": {
+      "main": [
+        [
+          {
+            "node": "Combine Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Instagram Failed": {
+      "main": [
+        [
+          {
+            "node": "Combine Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Both Successful?": {
+      "main": [
+        [
+          {
+            "node": "Send Success Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "30993866-706a-42d7-be85-18092bf1c7f1",
+  "meta": {
+    "instanceId": "d71263fb009a81a600d14b12fc2fe95c24baa5db34115230794ae80ce97be489"
+  },
+  "nodeGroups": [
+    {
+      "id": "e8f43b9c-81b1-4edd-abfe-2f77cd8cd3ba",
+      "name": "Plan video content",
+      "nodeIds": [
+        "2435aed5-1d66-4e5c-a48d-6054d5415ea8",
+        "b918eae8-cf02-4bb9-8479-d209432d580f",
+        "592184f2-bb02-4067-abe3-a8b739764249",
+        "f2b4fb41-bc65-40b8-960e-29985e1b6e1d",
+        "7bddf475-82f9-43d3-a896-c8d45dbb3e98",
+        "780a8daa-515c-4e19-ab8c-958ce8c5c05e",
+        "763c3e55-2c86-46a3-9b0d-610a5ecc1f21",
+        "92e466ca-c955-48de-a56f-27b342d38263",
+        "7110565f-a982-42a9-b048-d0f4f2b9cc94",
+        "710b0400-31ac-4957-b6cc-811065693e12"
+      ],
+      "description": "Turns the one-line prompt into a content plan, a voiceover script, and scenes with image prompts"
+    },
+    {
+      "id": "5eebbedb-91ba-4992-8845-fd3890ce00fc",
+      "name": "Render narrated video",
+      "nodeIds": [
+        "e135000d-f804-4dbc-8881-44be6f323bc9",
+        "e8aeb417-614c-43ed-b628-27f55025e2d0",
+        "7e7f9d96-07e0-4ff4-9d07-ec3bb641eb24",
+        "ad80a071-4ca7-4bcc-adf5-288396f91128",
+        "1926f1c6-d77d-4fdb-87ac-2582b5bf6931"
+      ],
+      "description": "Generates scene images, voiceover and captions in one cloud render, polling until the MP4 is ready"
+    },
+    {
+      "id": "23160d58-ff5f-4a09-802f-94904fd0da11",
+      "name": "Review video quality",
+      "nodeIds": [
+        "8c48e83a-0a00-4109-a302-5f01cc7a388b",
+        "a61351d6-4334-4a5b-85df-aba065b99cc4",
+        "4a77cddf-1e51-4951-a69e-e47398daedcd",
+        "418dbf91-59d2-40b4-b5cb-0f9fe48fa833"
+      ],
+      "description": "AI reviewer scores the finished video and script; only passing videos move on to publishing"
+    },
+    {
+      "id": "20fff9aa-4f67-4b57-87e3-c6ecb46862ae",
+      "name": "Write SEO metadata",
+      "nodeIds": [
+        "97ab11ad-e1f3-4b45-a982-21e1676023c1",
+        "8b64b5c9-a34b-49ef-8b2e-608a80a902ee",
+        "36f10934-f528-49f8-ad18-495c15c63a0c",
+        "169b1d25-483c-4e79-ae3f-e91c1909320f"
+      ],
+      "description": "Creates title, description, tags, hashtags and caption, and sets the publish time"
+    },
+    {
+      "id": "e13a24c9-56e3-4419-8b95-568e32ab16c0",
+      "name": "Publish and notify",
+      "nodeIds": [
+        "d26a9a3c-2aa6-4b91-b761-d1dc8f701f8f",
+        "37a960a3-3a7e-4071-a73f-967934d6b64f",
+        "027de474-b74f-499e-b9a3-2b04151b9abe",
+        "54c71082-5003-45d9-9820-fbcd57a9b951",
+        "304ceb74-1a5c-4edc-b7f0-a3ee823daf15",
+        "5aa39994-4290-4986-9ab6-d29f63657303",
+        "907920cd-bb4a-48b4-9999-409d1f58e2f6",
+        "6101c21f-e4d6-4583-80b1-1d9a4b19c656",
+        "8969ac86-eb05-44d9-88d4-7c827e5d9423",
+        "ebe22927-103d-4245-a396-aba2e96ab8bc",
+        "59571350-3501-418f-aaaf-a7ad38c9ca7c",
+        "f544f8f5-725e-4266-b981-6659cc4d4d09",
+        "7e66cc1c-9afa-45e2-86ab-3292e30e1579",
+        "d28425e0-a7fd-430f-b985-79b04e67a27d",
+        "dd8e92da-6944-44bd-b0a5-aabf7c27fc84",
+        "9aeede52-03c0-43cb-a8ee-50f022bc527c",
+        "6db627e1-7207-4c10-a385-50ae6d2493a4",
+        "378c219b-4c4a-417e-9a6d-6069431b34b5"
+      ],
+      "description": "At publish time, posts to YouTube and Instagram Reels, then emails the links or any errors"
+    }
+  ],
+  "id": "fGBOdK7TcJjmDhda",
+  "tags": []
+}
